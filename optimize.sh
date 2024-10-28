@@ -17,7 +17,7 @@ get_memory_size() {
 
 # 备份配置
 backup_configs() {
-    echo -e "${yellow}创建配置备份...${plain}"
+    echo -e "${green}创建配置备份...${plain}"
     cp /etc/sysctl.conf /etc/sysctl.conf.backup.$(date +%Y%m%d) 2>/dev/null
     cp /etc/security/limits.conf /etc/security/limits.conf.backup.$(date +%Y%m%d) 2>/dev/null
 }
@@ -261,13 +261,13 @@ apply_optimizations() {
     backup_configs
     
     if [ $mem_size -le 2048 ]; then
-        echo -e "${yellow}应用小内存优化方案...${plain}"
+        echo -e "${red}应用小内存优化方案...${plain}"
         apply_small_memory_optimizations
     elif [ $mem_size -le 4096 ]; then
-        echo -e "${yellow}应用中等配置优化方案...${plain}"
+        echo -e "${red}应用中等配置优化方案...${plain}"
         apply_medium_memory_optimizations
     else
-        echo -e "${yellow}应用大内存优化方案...${plain}"
+        echo -e "${red}应用大内存优化方案...${plain}"
         apply_large_memory_optimizations
     fi
     
