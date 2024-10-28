@@ -303,11 +303,11 @@ view_current_config() {
 
         # 根据当前值与参考值的关系，标注当前配置的区间并高亮
         if (( current_value <= small_ref )); then
-            range="${green}小内存优化方案（<=2GB）${plain}"
+            range="${green}<= 小内存优化方案（<=2GB）${plain}"
         elif (( current_value <= medium_ref )); then
-            range="${yellow}中等配置优化方案（2-4GB）${plain}"
+            range="${yellow}<= 中等配置优化方案（2-4GB）${plain}"
         elif (( current_value <= large_ref )); then
-            range="${red}大内存优化方案（>4GB）${plain}"
+            range="${red}<= 大内存优化方案（>4GB）${plain}"
         else
             range="${red}超出大内存优化方案参考值${plain}"
         fi
