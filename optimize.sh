@@ -483,7 +483,7 @@ manage_swap() {
                 fi
                 ;;
             0)
-                break
+                show_menu
                 ;;
             *)
                 echo -e "${red}请输入正确的数字 [0-3]${plain}"
