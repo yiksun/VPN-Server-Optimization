@@ -283,9 +283,9 @@ apply_optimizations() {
 # 查看当前配置
 view_current_config() {
     echo -e "${yellow}当前系统配置：${plain}"
-    echo -e "内存大小：$(free -h | grep Mem | awk '{print $2}')"
-    echo -e "当前TCP拥塞控制算法：$(sysctl -n net.ipv4.tcp_congestion_control)"
-    echo -e "当前队列算法：$(sysctl -n net.core.default_qdisc)"
+    echo -e "${yellow}内存大小：${plain}$(free -h | grep Mem | awk '{print $2}')"
+    echo -e "${yellow}当前TCP拥塞控制算法：${plain}$(sysctl -n net.ipv4.tcp_congestion_control)"
+    echo -e "${yellow}当前队列算法：${plain}$(sysctl -n net.core.default_qdisc)"
     echo -e "\n${yellow}重要网络参数：${plain}"
 
     # 定义参考值数组，包括小、中、大内存的阈值
@@ -301,15 +301,15 @@ view_current_config() {
         current_value=$(sysctl -n "$param")
         read -r small_ref medium_ref large_ref <<< "${ref_values[$param]}"
 
-        # 根据当前值与参考值的关系，标注当前配置的区间
+        # 根据当前值与参考值的关系，标注当前配置的区间并高亮
         if (( current_value <= small_ref )); then
-            range="小内存优化方案（<=2GB）"
+            range="${green}小内存优化方案（<=2GB）${plain}"
         elif (( current_value <= medium_ref )); then
-            range="中等配置优化方案（2-4GB）"
+            range="${yellow}中等配置优化方案（2-4GB）${plain}"
         elif (( current_value <= large_ref )); then
-            range="大内存优化方案（>4GB）"
+            range="${red}大内存优化方案（>4GB）${plain}"
         else
-            range="超出大内存优化方案参考值"
+            range="${red}超出大内存优化方案参考值${plain}"
         fi
 
         echo -e "${param} = ${current_value} ${plain}（参考值：小内存: $small_ref, 中等配置: $medium_ref, 大内存: $large_ref，当前配置: ${range}）"
