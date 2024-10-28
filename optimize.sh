@@ -353,3 +353,6 @@ main() {
     fi  # Add this line to close the if statement
 
 }  # Add this line to close the main function
+
+# 运行主函数
+main
