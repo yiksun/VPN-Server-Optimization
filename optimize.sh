@@ -424,10 +424,12 @@ setup_swap() {
     # 设置swappiness - 根据内存大小设置
     local mem_total=$(free -m | awk '/Mem:/ {print $2}')
     local swappiness
-    if [ $mem_total -le 2048 ]; then
-        swappiness=60  # 小内存系统，较积极使用swap
-    elif [ $mem_total -le 8192 ]; then
-        swappiness=30  # 中等内存，平衡使用
+    if [ $mem_total -le 512]; then
+        swappiness=90  # 极小内存系统，较积极使用swap
+    elif [ $mem_total -le 1024 ]; then
+        swappiness=60  # 较小内存，使用默认60
+    elif [ $mem_total -le 2048 ]; then
+        swappiness=30  # 小内存，平衡使用
     else
         swappiness=10  # 大内存，较少使用swap
     fi
