@@ -1,5 +1,11 @@
-# VPN-Server-Optimization
-VPS性能优化脚本
+# VPN-Server-Optimization | VPS性能优化脚本
+
+## 下载脚本
+```
+wget -O optimize.sh "https://github.com/zmethan/VPN-Server-Optimization/raw/main/optimize.sh" && chmod +x optimize.sh && ./optimize.sh
+```
+
+## 脚本菜单
   1.  自动检测并优化（推荐）
   2.  小内存优化方案（<=2GB）
   3.  中等配置优化方案（2-4GB）
@@ -13,7 +19,3 @@ VPS性能优化脚本
        3.  关闭并删除swap
   0.  退出脚本
 
-
-```
-wget -O optimize.sh "https://github.com/zmethan/VPN-Server-Optimization/raw/main/optimize.sh" && chmod +x optimize.sh && ./optimize.sh
-```
