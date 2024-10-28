@@ -250,12 +250,47 @@ show_menu() {
   ${green}5.${plain}  仅设置BBR
   ${green}6.${plain}  查看当前网络配置
   ${green}7.${plain}  恢复默认配置
+  ${green}8.${plain}  Swap管理
   ${green}0.${plain}  退出脚本
 "
-    echo && read -p "请输入选择 [0-7]: " num
+    echo && read -p "请输入选择 [0-8]: " num
 }
 
-# 应用优化
+# 持久化系统优化设置
+persist_optimization() {
+    local config_file="/etc/sysctl.d/99-system-optimization.conf"
+    
+    # 将sysctl设置写入持久化配置文件
+    if [ -f "/etc/sysctl.conf" ]; then
+        cp /etc/sysctl.conf $config_file
+    fi
+    
+    # 确保网络接口设置在重启后生效
+    local MAIN_INTERFACE=$(ip route get 8.8.8.8 | awk '{print $5; exit}')
+    if [ ! -z "$MAIN_INTERFACE" ]; then
+        # 创建网络接口配置服务
+        cat > /etc/systemd/system/network-optimization.service << EOF
+[Unit]
+Description=Network Interface Optimization
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/sbin/ip link set $MAIN_INTERFACE txqueuelen 10000
+ExecStart=/sbin/ethtool -L $MAIN_INTERFACE combined \$(ethtool -l $MAIN_INTERFACE 2>/dev/null | grep -i "combined" | head -n1 | awk '{print \$2}')
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOF
+        
+        # 启用服务
+        systemctl daemon-reload
+        systemctl enable network-optimization.service
+    fi
+}
+
+# 优化应用函数
 apply_optimizations() {
     local mem_size=$1
     backup_configs
@@ -275,10 +310,12 @@ apply_optimizations() {
     optimize_network_interface
     optimize_dns
     clear_cache
+    persist_optimization  # 添加持久化设置
     sysctl -p
     
     echo -e "${green}优化完成！${plain}"
 }
+
 
 # 查看当前配置
 view_current_config() {
@@ -328,6 +365,135 @@ restore_default() {
     fi
 }
 
+# Swap相关函数
+check_swap() {
+    echo -e "${yellow}检查swap状态...${plain}"
+    swap_enabled=$(swapon --show)
+    current_swap_size=$(free -m | awk '/Swap:/ {print $2}')
+    
+    if [ -z "$swap_enabled" ]; then
+        echo -e "${red}当前系统未启用swap${plain}"
+        return 1
+    else
+        echo -e "${green}当前已启用swap${plain}"
+        echo -e "Swap大小: ${green}${current_swap_size}MB${plain}"
+        echo -e "当前swappiness值: ${green}$(cat /proc/sys/vm/swappiness)${plain}"
+        return 0
+    fi
+}
+
+# 计算推荐的swap大小
+get_recommended_swap_size() {
+    local mem_total=$(free -m | awk '/Mem:/ {print $2}')
+    local recommended_size
+    
+    if [ $mem_total -le 2048 ]; then
+        recommended_size=$((mem_total * 2))
+    elif [ $mem_total -le 8192 ]; then
+        recommended_size=$((mem_total * 3 / 2))
+    else
+        recommended_size=$((mem_total))
+    fi
+    
+    echo $recommended_size
+}
+
+# 配置并持久化swap设置
+setup_swap() {
+    local swap_size=$1
+    local swap_file="/swapfile"
+    
+    echo -e "${yellow}开始设置swap...${plain}"
+    
+    # 如果已存在swap，先关闭并删除
+    swapoff -a >/dev/null 2>&1
+    rm -f $swap_file >/dev/null 2>&1
+    
+    # 创建swap文件
+    echo -e "${green}创建${swap_size}MB的swap文件...${plain}"
+    dd if=/dev/zero of=$swap_file bs=1M count=$swap_size
+    chmod 600 $swap_file
+    mkswap $swap_file
+    swapon $swap_file
+    
+    # 添加到fstab以确保重启后自动启用
+    if ! grep -q "$swap_file" /etc/fstab; then
+        echo "$swap_file none swap sw 0 0" >> /etc/fstab
+    fi
+    
+    # 设置swappiness - 根据内存大小设置
+    local mem_total=$(free -m | awk '/Mem:/ {print $2}')
+    local swappiness
+    if [ $mem_total -le 2048 ]; then
+        swappiness=60  # 小内存系统，较积极使用swap
+    elif [ $mem_total -le 8192 ]; then
+        swappiness=30  # 中等内存，平衡使用
+    else
+        swappiness=10  # 大内存，较少使用swap
+    fi
+    
+    # 持久化swappiness设置
+    sysctl vm.swappiness=$swappiness >/dev/null 2>&1
+    echo "vm.swappiness=$swappiness" > /etc/sysctl.d/99-swappiness.conf
+    
+    echo -e "${green}Swap设置完成！${plain}"
+    echo -e "已创建${green}${swap_size}MB${plain}的swap空间"
+    echo -e "Swappiness设置为: ${green}${swappiness}${plain}"
+}
+
+# Swap管理菜单
+manage_swap() {
+    while true; do
+        echo -e "
+  ${green}Swap管理菜单${plain}
+  ${green}1.${plain}  检查当前swap状态
+  ${green}2.${plain}  创建/修改swap
+  ${green}3.${plain}  关闭并删除swap
+  ${green}0.${plain}  返回主菜单
+"
+        read -p "请输入选择 [0-3]: " swap_choice
+        
+        case $swap_choice in
+            1)
+                check_swap
+                ;;
+            2)
+                local recommended_size=$(get_recommended_swap_size)
+                echo -e "${yellow}系统推荐的swap大小为: ${green}${recommended_size}MB${plain}"
+                read -p "请输入要设置的swap大小(MB)[默认为推荐大小]: " swap_size
+                swap_size=${swap_size:-$recommended_size}
+                
+                # 验证输入
+                if ! [[ "$swap_size" =~ ^[0-9]+$ ]] || [ $swap_size -lt 256 ]; then
+                    echo -e "${red}错误：请输入大于256的数字${plain}"
+                    continue
+                fi
+                
+                setup_swap $swap_size
+                ;;
+            3)
+                if check_swap; then
+                    echo -e "${yellow}正在关闭并删除swap...${plain}"
+                    swapoff -a
+                    sed -i '/swapfile/d' /etc/fstab
+                    rm -f /swapfile
+                    # 删除swappiness设置
+                    rm -f /etc/sysctl.d/99-swappiness.conf
+                    echo -e "${green}Swap已关闭并删除${plain}"
+                fi
+                ;;
+            0)
+                break
+                ;;
+            *)
+                echo -e "${red}请输入正确的数字 [0-3]${plain}"
+                ;;
+        esac
+        
+        echo && read -p "按回车继续..."
+    done
+}
+
 # 主函数
 main() {
     show_menu
@@ -355,15 +521,17 @@ main() {
         7)
             restore_default
             ;;
+        8)
+            manage_swap
+            ;;
         0)
             exit 0
             ;;
         *)
-            echo -e "${red}请输入正确的数字 [0-7]${plain}"
+            echo -e "${red}请输入正确的数字 [0-8]${plain}"
             ;;
     esac
     
-    # 询问是否重启
     if [[ $num =~ ^[1-4]$ ]]; then
         read -p "需要重启服务器才能使所有优化生效，是否现在重启？[Y/n] " yn
         [ -z "${yn}" ] && yn="y"
@@ -373,9 +541,8 @@ main() {
         else
             echo "请记得稍后手动重启服务器以使所有优化生效"
         fi
-    fi  # Closing the if statement correctly
-    
-    }  # Closing the main function correctly
+    fi
+}
 
 # 运行主函数
 main
