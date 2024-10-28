@@ -287,10 +287,33 @@ view_current_config() {
     echo -e "当前TCP拥塞控制算法：$(sysctl -n net.ipv4.tcp_congestion_control)"
     echo -e "当前队列算法：$(sysctl -n net.core.default_qdisc)"
     echo -e "\n${yellow}重要网络参数：${plain}"
-    sysctl -n net.core.rmem_max
-    sysctl -n net.core.wmem_max
-    sysctl -n net.ipv4.tcp_max_syn_backlog
-    sysctl -n net.core.somaxconn
+
+    # 定义参考值数组，包括小、中、大内存的阈值
+    declare -A ref_values=(
+        ["net.core.rmem_max"]="16777216 33554432 67108864"
+        ["net.core.wmem_max"]="16777216 33554432 67108864"
+        ["net.ipv4.tcp_max_syn_backlog"]="2048 8192 32768"
+        ["net.core.somaxconn"]="2048 8192 32768"
+    )
+
+    # 遍历每个参数，显示当前值、参考值和区间判断
+    for param in "${!ref_values[@]}"; do
+        current_value=$(sysctl -n "$param")
+        read -r small_ref medium_ref large_ref <<< "${ref_values[$param]}"
+
+        # 根据当前值与参考值的关系，标注当前配置的区间
+        if (( current_value <= small_ref )); then
+            range="小内存优化方案（<=2GB）"
+        elif (( current_value <= medium_ref )); then
+            range="中等配置优化方案（2-4GB）"
+        elif (( current_value <= large_ref )); then
+            range="大内存优化方案（>4GB）"
+        else
+            range="超出大内存优化方案参考值"
+        fi
+
+        echo -e "${param} = ${current_value} ${plain}（参考值：小内存: $small_ref, 中等配置: $medium_ref, 大内存: $large_ref，当前配置: ${range}）"
+    done
 }
 
 # 恢复默认配置
