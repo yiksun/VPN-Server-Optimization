@@ -282,10 +282,10 @@ apply_optimizations() {
 
 # 查看当前配置
 view_current_config() {
-    echo -e "${yellow}当前系统配置：${plain}"
-    echo -e "${yellow}内存大小：${plain}$(free -h | grep Mem | awk '{print $2}')"
-    echo -e "${yellow}当前TCP拥塞控制算法：${plain}$(sysctl -n net.ipv4.tcp_congestion_control)"
-    echo -e "${yellow}当前队列算法：${plain}$(sysctl -n net.core.default_qdisc)"
+    echo -e "${yellow}当前系统配置${plain}"
+    echo -e "${yellow}内存大小：${plain}${green}$(free -h | grep Mem | awk '{print $2}')${plain}"
+    echo -e "${yellow}当前TCP拥塞控制算法：${plain}${green}$(sysctl -n net.ipv4.tcp_congestion_control)${plain}"
+    echo -e "${yellow}当前队列算法：${plain}${green}$(sysctl -n net.core.default_qdisc)${plain}"
     echo -e "\n${yellow}重要网络参数：${plain}"
 
     # 定义参考值数组，包括小、中、大内存的阈值
@@ -312,7 +312,7 @@ view_current_config() {
             range="${red}超出大内存优化方案参考值${plain}"
         fi
 
-        echo -e "${param} = ${current_value} ${plain}（参考值：小内存: $small_ref, 中等配置: $medium_ref, 大内存: $large_ref，当前配置: ${range}）"
+        echo -e "${param} = ${green} ${current_value} ${plain}（参考值：小内存: $small_ref, 中等配置: $medium_ref, 大内存: $large_ref，当前配置: ${range}）"
     done
 }
 
