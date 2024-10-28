@@ -350,7 +350,6 @@ main() {
         else
             echo "请记得稍后手动重启服务器以使所有优化生效"
         fi
-}
+    fi  # Add this line to close the if statement
 
-# 运行主函数
-main
+}  # Add this line to close the main function
