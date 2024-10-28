@@ -449,7 +449,7 @@ manage_swap() {
   ${green}1.${plain}  检查当前swap状态
   ${green}2.${plain}  创建/修改swap
   ${green}3.${plain}  关闭并删除swap
-  ${green}0.${plain}  返回主菜单
+  ${green}0.${plain}  退出
 "
         read -p "请输入选择 [0-3]: " swap_choice
         
@@ -483,7 +483,7 @@ manage_swap() {
                 fi
                 ;;
             0)
-                show_menu
+                break
                 ;;
             *)
                 echo -e "${red}请输入正确的数字 [0-3]${plain}"
