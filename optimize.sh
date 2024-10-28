@@ -242,7 +242,7 @@ clear_cache() {
 # 展示菜单
 show_menu() {
     echo -e "
-  ${green}VPS性能优化脚本 ver-1.0${plain}
+  ${green}VPS性能优化脚本 ver-1.0.1${plain}
   ${green}1.${plain}  自动检测并优化（推荐）
   ${green}2.${plain}  小内存优化方案（<=2GB）
   ${green}3.${plain}  中等配置优化方案（2-4GB）
@@ -424,7 +424,7 @@ setup_swap() {
     # 设置swappiness - 根据内存大小设置
     local mem_total=$(free -m | awk '/Mem:/ {print $2}')
     local swappiness
-    if [ $mem_total -le 512]; then
+    if [ $mem_total -le 512 ]; then
         swappiness=90  # 极小内存系统，较积极使用swap
     elif [ $mem_total -le 1024 ]; then
         swappiness=60  # 较小内存，使用默认60
