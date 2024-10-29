@@ -242,7 +242,7 @@ clear_cache() {
 # 展示菜单
 show_menu() {
     echo -e "
-  ${green}VPS性能优化脚本 ver-1.0.3${plain}
+  ${green}VPS性能优化脚本 ver-1.0.4${plain}
   ${green}1.${plain}  自动检测并优化（推荐）
   ${green}2.${plain}  小内存优化方案（<=2GB）
   ${green}3.${plain}  中等配置优化方案（2-4GB）
@@ -258,35 +258,32 @@ show_menu() {
 
 # 持久化系统优化设置
 persist_optimization() {
-    # 备份当前的 /etc/sysctl.conf
-    cp /etc/sysctl.conf /etc/sysctl.conf.backup.$(date +%Y%m%d)
+    local config_file="/etc/sysctl.d/99-system-optimization.conf"
+    
+    # 将当前 sysctl 配置写入持久化文件
+    grep -v '^#' /etc/sysctl.conf | grep -E "^[a-zA-Z0-9]" > $config_file
 
-    # 覆盖 /etc/sysctl.conf，使其包含最新的优化参数
-    grep -v '^#' /etc/sysctl.conf | grep -E "^[a-zA-Z0-9]" > /etc/sysctl.conf
+    # 应用持久化配置
+    sysctl -p $config_file
 
-    # 确保设置生效
-    sysctl -p /etc/sysctl.conf
-
-    # 保持网络接口设置持久化
-    local MAIN_INTERFACE=$(ip route get 8.8.8.8 | awk '{print $5; exit}')
-    if [ ! -z "$MAIN_INTERFACE" ]; then
-        cat > /etc/systemd/system/network-optimization.service << EOF
+    # 创建 systemd 服务来确保加载持久化配置
+    cat > /etc/systemd/system/sysctl-reapply.service << EOF
 [Unit]
-Description=Network Interface Optimization
+Description=Reapply sysctl settings at boot
 After=network.target
 
 [Service]
 Type=oneshot
-ExecStart=/sbin/ip link set $MAIN_INTERFACE txqueuelen 10000
-ExecStart=/sbin/ethtool -L $MAIN_INTERFACE combined \$(ethtool -l $MAIN_INTERFACE 2>/dev/null | grep -i "combined" | head -n1 | awk '{print \$2}')
+ExecStart=/sbin/sysctl -p $config_file
 RemainAfterExit=yes
 
 [Install]
 WantedBy=multi-user.target
 EOF
-        systemctl daemon-reload
-        systemctl enable network-optimization.service
-    fi
+
+    # 启用服务
+    systemctl daemon-reload
+    systemctl enable sysctl-reapply.service
 }
 
 # 优化应用函数
