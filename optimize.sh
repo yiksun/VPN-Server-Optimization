@@ -242,7 +242,7 @@ clear_cache() {
 # 展示菜单
 show_menu() {
     echo -e "
-  ${green}VPS性能优化脚本 ver-1.0.2${plain}
+  ${green}VPS性能优化脚本 ver-1.0.3${plain}
   ${green}1.${plain}  自动检测并优化（推荐）
   ${green}2.${plain}  小内存优化方案（<=2GB）
   ${green}3.${plain}  中等配置优化方案（2-4GB）
