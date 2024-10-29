@@ -242,7 +242,7 @@ clear_cache() {
 # 展示菜单
 show_menu() {
     echo -e "
-  ${green}VPS性能优化脚本 ver-1.0.1${plain}
+  ${green}VPS性能优化脚本 ver-1.0.2${plain}
   ${green}1.${plain}  自动检测并优化（推荐）
   ${green}2.${plain}  小内存优化方案（<=2GB）
   ${green}3.${plain}  中等配置优化方案（2-4GB）
@@ -259,12 +259,13 @@ show_menu() {
 # 持久化系统优化设置
 persist_optimization() {
     local config_file="/etc/sysctl.d/99-system-optimization.conf"
+
+    # 复制sysctl设置至持久化配置文件中
+    grep -v '^#' /etc/sysctl.conf | grep -E "^[a-zA-Z0-9]" > $config_file
     
-    # 将sysctl设置写入持久化配置文件
-    if [ -f "/etc/sysctl.conf" ]; then
-        cp /etc/sysctl.conf $config_file
-    fi
-    
+    # 应用持久化设置
+    sysctl -p $config_file
+
     # 确保网络接口设置在重启后生效
     local MAIN_INTERFACE=$(ip route get 8.8.8.8 | awk '{print $5; exit}')
     if [ ! -z "$MAIN_INTERFACE" ]; then
@@ -283,8 +284,8 @@ RemainAfterExit=yes
 [Install]
 WantedBy=multi-user.target
 EOF
-        
-        # 启用服务
+
+        # 启用并启动服务
         systemctl daemon-reload
         systemctl enable network-optimization.service
     fi
