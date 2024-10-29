@@ -258,18 +258,18 @@ show_menu() {
 
 # 持久化系统优化设置
 persist_optimization() {
-    local config_file="/etc/sysctl.d/99-system-optimization.conf"
+    # 备份当前的 /etc/sysctl.conf
+    cp /etc/sysctl.conf /etc/sysctl.conf.backup.$(date +%Y%m%d)
 
-    # 复制sysctl设置至持久化配置文件中
-    grep -v '^#' /etc/sysctl.conf | grep -E "^[a-zA-Z0-9]" > $config_file
-    
-    # 应用持久化设置
-    sysctl -p $config_file
+    # 覆盖 /etc/sysctl.conf，使其包含最新的优化参数
+    grep -v '^#' /etc/sysctl.conf | grep -E "^[a-zA-Z0-9]" > /etc/sysctl.conf
 
-    # 确保网络接口设置在重启后生效
+    # 确保设置生效
+    sysctl -p /etc/sysctl.conf
+
+    # 保持网络接口设置持久化
     local MAIN_INTERFACE=$(ip route get 8.8.8.8 | awk '{print $5; exit}')
     if [ ! -z "$MAIN_INTERFACE" ]; then
-        # 创建网络接口配置服务
         cat > /etc/systemd/system/network-optimization.service << EOF
 [Unit]
 Description=Network Interface Optimization
@@ -284,8 +284,6 @@ RemainAfterExit=yes
 [Install]
 WantedBy=multi-user.target
 EOF
-
-        # 启用并启动服务
         systemctl daemon-reload
         systemctl enable network-optimization.service
     fi
