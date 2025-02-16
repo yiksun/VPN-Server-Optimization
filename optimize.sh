@@ -415,6 +415,9 @@ setup_swap() {
     mkswap $swap_file
     swapon $swap_file
 
+    # **将swapfile添加到fstab，确保重启后仍然生效**
+    grep -q "$swap_file" /etc/fstab || echo "$swap_file none swap sw 0 0" >> /etc/fstab
+
     # 持久化swappiness设置
     sysctl vm.swappiness=$swappiness >/dev/null 2>&1
     echo "vm.swappiness=$swappiness" > /etc/sysctl.d/99-swappiness.conf
