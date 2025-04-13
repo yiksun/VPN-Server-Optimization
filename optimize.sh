@@ -35,8 +35,8 @@ net.ipv4.ip_forward = 1
 # TCP缓冲区优化(小内存版)
 net.core.rmem_max = 16777216
 net.core.wmem_max = 16777216
-net.ipv4.tcp_rmem = 4096 87380 16777216
-net.ipv4.tcp_wmem = 4096 87380 16777216
+net.ipv4.tcp_rmem = 4096 87380 15500000
+net.ipv4.tcp_wmem = 4096 16384 15500000
 net.ipv4.tcp_mem = 196608 262144 394240
 
 # 连接优化(小内存版)
@@ -85,7 +85,7 @@ net.ipv4.ip_forward = 1
 net.core.rmem_max = 33554432
 net.core.wmem_max = 33554432
 net.ipv4.tcp_rmem = 4096 87380 33554432
-net.ipv4.tcp_wmem = 4096 87380 33554432
+net.ipv4.tcp_wmem = 4096 16384 33554432
 net.ipv4.tcp_mem = 393216 524288 786432
 
 # 连接优化(中等配置版)
@@ -134,7 +134,7 @@ net.ipv4.ip_forward = 1
 net.core.rmem_max = 67108864
 net.core.wmem_max = 67108864
 net.ipv4.tcp_rmem = 4096 87380 67108864
-net.ipv4.tcp_wmem = 4096 87380 67108864
+net.ipv4.tcp_wmem = 4096 16384 67108864
 net.ipv4.tcp_mem = 786432 2097152 67108864
 net.ipv4.tcp_window_scaling = 1
 
