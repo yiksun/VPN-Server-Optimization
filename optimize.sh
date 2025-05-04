@@ -18,8 +18,8 @@ get_memory_size() {
 # 备份配置
 backup_configs() {
     echo -e "${green}创建配置备份...${plain}"
-    cp /etc/sysctl.conf /etc/sysctl.conf.backup.$(date +%Y%m%d) 2>/dev/null
-    cp /etc/security/limits.conf /etc/security/limits.conf.backup.$(date +%Y%m%d) 2>/dev/null
+    cp /etc/sysctl.conf /etc/sysctl.conf.backup.$(date +%Y%m%d%H%M%S) 2>/dev/null
+    cp /etc/security/limits.conf /etc/security/limits.conf.backup.$(date +%Y%m%d%H%M%S) 2>/dev/null
 }
 
 # 针对小内存优化（<=2GB）
@@ -215,7 +215,7 @@ optimize_dns() {
     echo -e "${yellow}优化DNS设置...${plain}"
     
     # 备份原始resolv.conf
-    cp /etc/resolv.conf /etc/resolv.conf.backup 2>/dev/null
+    cp /etc/resolv.conf /etc/resolv.conf.backup.$(date +%Y%m%d%H%M%S) 2>/dev/null
     
     # 设置新的DNS服务器
     cat > /etc/resolv.conf << EOF
@@ -353,7 +353,7 @@ view_current_config() {
 
 # 恢复默认配置
 restore_default() {
-    local latest_backup=$(ls -t /etc/sysctl.conf.backup.* 2>/dev/null | head -n1)
+    local latest_backup=$(ls -t /etc/sysctl.conf.backup.* 2>/dev/null | tail -n1)
     if [ ! -z "$latest_backup" ]; then
         cp "$latest_backup" /etc/sysctl.conf
         sysctl -p
